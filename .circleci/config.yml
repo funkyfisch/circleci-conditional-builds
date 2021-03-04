@@ -1,30 +1,37 @@
 version: 2.1
 
 workflows:
+  on-master-merge:
+    jobs:
+      - publish:
+          filters:
+            branches:
+              only: main
+
   on-pull-request-update:
     jobs:
       - prepare:
           filters:
             branches:
-              ignore: master
+              ignore: main
       - lint-config:
           requires:
             - prepare
           filters:
             branches:
-              ignore: master
+              ignore: main
       - build:
           requires:
             - lint-config
           filters:
             branches:
-              ignore: master
+              ignore: main
       - unit-test:
           requires:
             - build
           filters:
             branches:
-              ignore: master
+              ignore: main
 
 jobs:
 
@@ -127,3 +134,10 @@ jobs:
             circleci-agent step halt
           fi
       - run: npm run test:unit
+
+  publish:
+    docker:
+      - image: circleci/node:lts
+    steps:
+      - run: |
+          echo "Publishing docker image!"
