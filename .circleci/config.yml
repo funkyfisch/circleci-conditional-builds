@@ -1,7 +1,58 @@
 version: 2.1
-orbs:
-  node: circleci/node@3.0.0
+
 workflows:
-  node-tests:
+  on-pull-request-update:
     jobs:
-      - node/test
+      - build:
+          filters:
+            branches:
+              ignore: master
+      - unit-test:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: master
+
+jobs:
+  build:
+    docker:
+      - image: circleci/node:lts
+    working_directory: ~/app
+    steps:
+      - checkout
+      - run: |
+          if ! git diff HEAD~1..HEAD --name-only --diff-filter=d | grep "\.\(sh\|bash\)"
+          then
+            echo "No source files modified, skipping build"
+            circleci-agent step halt
+          fi
+      - restore_cache:
+          keys:
+            - v1-npm-deps-{{ checksum "package-lock.json" }}
+            - v1-npm-deps-
+      - run: npm install
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+      - save_cache:
+          paths:
+            - ./node_modules
+          key: v1-npm-{{ checksum "package-lock.json" }}
+      - run: npm run build
+
+  unit-test:
+    docker:
+      - image: circleci/node:lts
+    working_directory: ~/app
+    steps:
+      - attach_workspace:
+          at: .
+      - run: |
+          if ! git diff HEAD~1..HEAD --name-only --diff-filter=d | grep "\.\(sh\|bash\)"
+          then
+            echo "No source files modified, skipping build"
+            circleci-agent step halt
+          fi
+      - run: npm run test:unit
