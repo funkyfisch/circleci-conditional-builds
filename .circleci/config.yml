@@ -63,7 +63,7 @@ jobs:
           else
             echo "Running shellcheck"
           fi
-              - run: |
+      - run: |
           if ! cat changelist | grep "\.\(sh\|ash\|bash\)"
           then
             echo "No shell scripts modified, skipping shellcheck"
