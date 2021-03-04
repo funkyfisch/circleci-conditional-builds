@@ -1,0 +1,129 @@
+version: 2.1
+
+workflows:
+  on-pull-request-update:
+    jobs:
+      - prepare:
+          filters:
+            branches:
+              ignore: master
+      - lint-config:
+          requires:
+            - prepare
+          filters:
+            branches:
+              ignore: master
+      - build:
+          requires:
+            - lint-config
+          filters:
+            branches:
+              ignore: master
+      - unit-test:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: master
+
+jobs:
+
+  prepare:
+    docker:
+      - image: circleci/node:lts
+    working_directory: ~/app
+    steps:
+      - checkout
+      - run: |
+          git diff HEAD~1..HEAD --name-only --diff-filter=d > changelist
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+
+  lint-config:
+    docker:
+      - image: circleci/node:lts
+    working_directory: ~/app
+    steps:
+      - attach_workspace:
+          at: .
+          # how to catch error inside the if clause
+      - run: |
+          if ! cat changelist | grep "\(Dockerfile\|\.dockerfile\)"
+          then
+            echo "No dockerfiles modified, skipping hadolint"
+          else
+            echo "Running hadolint"
+          fi
+      - run: |
+          if ! cat changelist | grep "\.\(yml\|yaml\)"
+          then
+            echo "No shell scripts modified, skipping shellcheck"
+          else
+            echo "Running shellcheck"
+          fi
+      - run: |
+          if ! cat changelist | grep "\.\(sh\|ash\|bash\)"
+          then
+            echo "No shell scripts modified, skipping shellcheck"
+          else
+            echo "Running shellcheck"
+          fi
+      - run: |
+          if ! cat changelist | grep "\.\(yml\|yaml\)"
+          then
+            echo "No yaml files modified, skipping yml lint"
+          else
+            echo "Running shellcheck"
+          fi
+      - run: |
+          if ! cat changelist | grep "\.json"
+          then
+            echo "No json files modified, skipping json lint"
+          else
+            echo "Linting json files"
+          fi
+
+  build:
+    docker:
+      - image: circleci/node:lts
+    working_directory: ~/app
+    steps:
+      - attach_workspace:
+          at: .
+      - run: |
+          if ! cat changelist | grep "\.js"
+          then
+            echo "No source files modified, skipping build"
+            circleci-agent step halt
+          fi
+      - restore_cache:
+          keys:
+            - v1-npm-deps-{{ checksum "package-lock.json" }}
+            - v1-npm-deps-
+      - run: npm install
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+      - save_cache:
+          paths:
+            - ./node_modules
+          key: v1-npm-{{ checksum "package-lock.json" }}
+      - run: npm run build
+
+  unit-test:
+    docker:
+      - image: circleci/node:lts
+    working_directory: ~/app
+    steps:
+      - attach_workspace:
+          at: .
+      - run: |
+          if ! cat changelist | grep "\.js"
+          then
+            echo "No source files modified, skipping test"
+            circleci-agent step halt
+          fi
+      - run: npm run test:unit
