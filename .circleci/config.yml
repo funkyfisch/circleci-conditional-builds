@@ -11,7 +11,7 @@ workflows:
           requires:
             - prepare
           filters:
-            breanches:
+            branches:
               ignore: master
       - build:
           requires:
