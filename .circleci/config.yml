@@ -3,7 +3,19 @@ version: 2.1
 workflows:
   on-pull-request-update:
     jobs:
+      - prepare:
+          filters:
+            branches:
+              ignore: master
+      - lint-config:
+          requires:
+            - prepare
+          filters:
+            breanches:
+              ignore: master
       - build:
+          requires:
+            - lint-config
           filters:
             branches:
               ignore: master
