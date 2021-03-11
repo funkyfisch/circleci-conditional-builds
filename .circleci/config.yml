@@ -14,7 +14,7 @@ workflows:
           filters:
             branches:
               ignore: ${TRUNK_NAME}
-      - lint-config:
+      - lint:
           requires:
             - prepare
           filters:
@@ -22,7 +22,7 @@ workflows:
               ignore: ${TRUNK_NAME}
       - build:
           requires:
-            - lint-config
+            - lint
           filters:
             branches:
               ignore: ${TRUNK_NAME}
