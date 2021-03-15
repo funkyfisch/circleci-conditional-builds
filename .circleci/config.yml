@@ -170,7 +170,7 @@ jobs:
       - image: circleci/node:lts
     steps:
       - run:
-          name: Build and publish docker image if source or Dockerfile is modified
+          name: Generate reports, build and publish if relevant files modified
           command: |
             if ! cat changelist | grep "\(Dockerfile\|\.dockerfile\|\.js\|package\.json\)"
             then
