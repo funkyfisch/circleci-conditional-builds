@@ -20,7 +20,7 @@ workflows:
           filters:
             branches:
               ignore: ${TRUNK_NAME}
-      - build:
+      - download-dependencies:
           requires:
             - lint
           filters:
@@ -28,7 +28,7 @@ workflows:
               ignore: ${TRUNK_NAME}
       - unit-test:
           requires:
-            - build
+            - download-dependencies
           filters:
             branches:
               ignore: ${TRUNK_NAME}
@@ -122,7 +122,7 @@ jobs:
       #       fi
 
 
-  build:
+  download-dependencies:
     docker:
       - image: circleci/node:lts
     working_directory: ~/app
@@ -130,9 +130,9 @@ jobs:
       - attach_workspace:
           at: .
       - run: |
-          if ! cat changelist | grep "\.js"
+          if ! cat changelist | grep "\(\.js\|package\.json\)"
           then
-            echo "No source files modified, skipping build"
+            echo "No source files modified, skipping download-dependencies"
             circleci-agent step halt
           fi
       - restore_cache:
@@ -148,7 +148,6 @@ jobs:
           paths:
             - ./node_modules
           key: v1-npm-{{ checksum "package-lock.json" }}
-      - run: npm run build
 
   unit-test:
     docker:
@@ -158,7 +157,7 @@ jobs:
       - attach_workspace:
           at: .
       - run: |
-          if ! cat changelist | grep "\.js"
+          if ! cat changelist | grep "\(\.js\|package\.json\)"
           then
             echo "No source files modified, skipping test"
             circleci-agent step halt
