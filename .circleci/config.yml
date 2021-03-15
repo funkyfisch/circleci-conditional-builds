@@ -67,9 +67,9 @@ jobs:
               git diff \
                 ${TRUNK_NAME}.."$(git branch --show-current)" \
                 --name-only \
-                --diff-filter=d > changelist \
-            fi \
-            && cat changelist
+                --diff-filter=d > changelist
+            fi
+            cat changelist
       - persist_to_workspace:
           root: .
           paths:
