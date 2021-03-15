@@ -13,32 +13,32 @@ workflows:
       - prepare:
           filters:
             branches:
-              ignore: ${TRUNK_NAME}
+              ignore: $TRUNK_NAME
       - lint:
           requires:
             - prepare
           filters:
             branches:
-              ignore: ${TRUNK_NAME}
+              ignore: $TRUNK_NAME
       - build:
           requires:
             - lint
           filters:
             branches:
-              ignore: ${TRUNK_NAME}
+              ignore: $TRUNK_NAME
       - unit-test:
           requires:
             - build
           filters:
             branches:
-              ignore: ${TRUNK_NAME}
+              ignore: $TRUNK_NAME
 
   on-trunk-merge:
     jobs:
       - publish:
           filters:
             branches:
-              only: ${TRUNK_NAME}
+              only: $TRUNK_NAME
 
 
 jobs:
