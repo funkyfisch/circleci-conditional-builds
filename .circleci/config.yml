@@ -88,7 +88,7 @@ jobs:
             then
               echo "No dockerfiles modified, skipping hadolint"
             else
-              echo "Running hadolint"
+              hadolint $(cat changelist | grep "\(Dockerfile\|\.dockerfile\)")
             fi
       - run:
           name: Lint yml files
@@ -106,20 +106,20 @@ jobs:
             then
               echo "No shell scripts modified, skipping shellcheck"
             else
-              echo "Running shellcheck"
+              shellcheck $(cat changelist | grep "\.\(sh\|ash\|bash\)")
             fi
-      - run:
-          name: Lint docker-compose files
-          command: |
-            if ! cat changelist | grep "docker-compose*\.\(yml\|yaml\)"
-            then
-              echo "No docker compose files modified, skipping docker compose lint"
-            else
-              invalid_files_exist=0
-              cat changelist \
-                | grep "docker-compose*\.\(yml\|yaml\)" \
-                | while read -r cf; do docker-compose -f $cf config; done
-            fi
+      # - run:
+      #     name: Lint docker-compose files
+      #     command: |
+      #       if ! cat changelist | grep "docker-compose*\.\(yml\|yaml\)"
+      #       then
+      #         echo "No docker compose files modified, skipping docker compose lint"
+      #       else
+      #         invalid_files_exist=0
+      #         cat changelist \
+      #           | grep "docker-compose*\.\(yml\|yaml\)" \
+      #           | while read -r cf; do docker-compose -f $cf config; done
+      #       fi
 
 
   build:
@@ -169,5 +169,12 @@ jobs:
     docker:
       - image: circleci/node:lts
     steps:
-      - run: |
-          echo "Publishing docker image!"
+      - run:
+          name: Build and publish docker image if source or Dockerfile is modified
+          command: |
+            if ! cat changelist | grep "\(Dockerfile\|\.dockerfile\|\.js\|package\.json\)"
+            then
+              echo "No relevant files modified, skipping publishing step"
+            else
+              echo "Building and publishing docker image, publishing reports!"
+            fi
