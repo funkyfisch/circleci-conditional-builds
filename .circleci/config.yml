@@ -62,7 +62,7 @@ jobs:
               git diff \
                 HEAD~1..HEAD \
                 --name-only \
-                --diff-filter=d > changelist \
+                --diff-filter=d > changelist
             else
               git diff \
                 ${TRUNK_NAME}.."$(git branch --show-current)" \
