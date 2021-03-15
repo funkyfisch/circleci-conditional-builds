@@ -1,0 +1,22 @@
+{
+  "name": "circleci-conditional-builds",
+  "version": "1.0.0",
+  "description": "[![funkyfisch](https://circleci.com/gh/funkyfisch/circleci-conditional-builds.svg?style=shield)](https://circleci.com/gh/funkyfisch/circleci-conditional-builds?branch=main)",
+  "main": "src/index.js",
+  "scripts": {
+    "test:unit": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/funkyfisch/circleci-conditional-builds.git"
+  },
+  "author": "Ioannis Gkikas",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/funkyfisch/circleci-conditional-builds/issues"
+  },
+  "homepage": "https://github.com/funkyfisch/circleci-conditional-builds#readme",
+  "devDependencies": {
+    "jest": "^26.6.3"
+  }
+}

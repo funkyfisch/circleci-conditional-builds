@@ -4,7 +4,7 @@ executors:
 
   basic:
     docker:
-      - image: 'funkyfisch/circleci-basic-linting:0.1'
+      - image: 'funkyfisch/circleci-basic-linting:0.2'
 
 workflows:
 
@@ -13,32 +13,32 @@ workflows:
       - prepare:
           filters:
             branches:
-              ignore: $TRUNK_NAME
+              ignore: main
       - lint:
           requires:
             - prepare
           filters:
             branches:
-              ignore: $TRUNK_NAME
-      - build:
+              ignore: main
+      - download-dependencies:
           requires:
             - lint
           filters:
             branches:
-              ignore: $TRUNK_NAME
+              ignore: main
       - unit-test:
           requires:
-            - build
+            - download-dependencies
           filters:
             branches:
-              ignore: $TRUNK_NAME
+              ignore: main
 
   on-trunk-merge:
     jobs:
       - publish:
           filters:
             branches:
-              only: $TRUNK_NAME
+              only: main
 
 
 jobs:
@@ -57,7 +57,7 @@ jobs:
           # In the case that this is used after the merge, we want to compare the change with the
           # commit right before it
           command: |
-            if [[ "$(git branch --show-current)" == "${TRUNK_NAME}" ]]
+            if [[ "$(git branch --show-current)" == "main" ]]
             then
               git diff \
                 HEAD~1..HEAD \
@@ -65,7 +65,7 @@ jobs:
                 --diff-filter=d > changelist
             else
               git diff \
-                ${TRUNK_NAME}.."$(git branch --show-current)" \
+                main.."$(git branch --show-current)" \
                 --name-only \
                 --diff-filter=d > changelist
             fi
@@ -88,7 +88,7 @@ jobs:
             then
               echo "No dockerfiles modified, skipping hadolint"
             else
-              echo "Running hadolint"
+              hadolint $(cat changelist | grep "\(Dockerfile\|\.dockerfile\)")
             fi
       - run:
           name: Lint yml files
@@ -97,7 +97,7 @@ jobs:
             then
               echo "No yml files modified, skipping yaml linting"
             else
-              echo "Linting yml files"
+              yamllint $(cat changelist | grep "\.\(yml\|yaml\)")
             fi
       - run:
           name: Run shellcheck on shell scripts, if any
@@ -106,28 +106,23 @@ jobs:
             then
               echo "No shell scripts modified, skipping shellcheck"
             else
-              echo "Running shellcheck"
+              shellcheck $(cat changelist | grep "\.\(sh\|ash\|bash\)")
             fi
-      - run:
-          name: Lint docker-compose files
-          command: |
-            if ! cat changelist | grep "docker-compose*\.\(yml\|yaml\)"
-            then
-              echo "No docker compose files modified, skipping docker compose lint"
-            else
-              echo "Running shellcheck"
-            fi
-      - run:
-          name: Lint json files
-          command: |
-            if ! cat changelist | grep "\.json"
-            then
-              echo "No json files modified, skipping json lint"
-            else
-              echo "Linting json files"
-            fi
+      # - run:
+      #     name: Lint docker-compose files
+      #     command: |
+      #       if ! cat changelist | grep "docker-compose*\.\(yml\|yaml\)"
+      #       then
+      #         echo "No docker compose files modified, skipping docker compose lint"
+      #       else
+      #         invalid_files_exist=0
+      #         cat changelist \
+      #           | grep "docker-compose*\.\(yml\|yaml\)" \
+      #           | while read -r cf; do docker-compose -f $cf config; done
+      #       fi
 
-  build:
+
+  download-dependencies:
     docker:
       - image: circleci/node:lts
     working_directory: ~/app
@@ -135,9 +130,9 @@ jobs:
       - attach_workspace:
           at: .
       - run: |
-          if ! cat changelist | grep "\.js"
+          if ! cat changelist | grep "\(\.js\|package\.json\)"
           then
-            echo "No source files modified, skipping build"
+            echo "No source files modified, skipping download-dependencies"
             circleci-agent step halt
           fi
       - restore_cache:
@@ -153,7 +148,6 @@ jobs:
           paths:
             - ./node_modules
           key: v1-npm-{{ checksum "package-lock.json" }}
-      - run: npm run build
 
   unit-test:
     docker:
@@ -163,7 +157,7 @@ jobs:
       - attach_workspace:
           at: .
       - run: |
-          if ! cat changelist | grep "\.js"
+          if ! cat changelist | grep "\(\.js\|package\.json\)"
           then
             echo "No source files modified, skipping test"
             circleci-agent step halt
@@ -174,5 +168,12 @@ jobs:
     docker:
       - image: circleci/node:lts
     steps:
-      - run: |
-          echo "Publishing docker image!"
+      - run:
+          name: Generate reports, build and publish if relevant files modified
+          command: |
+            if ! cat changelist | grep "\(Dockerfile\|\.dockerfile\|\.js\|package\.json\)"
+            then
+              echo "No relevant files modified, skipping publishing step"
+            else
+              echo "Building and publishing docker image, publishing reports!"
+            fi
