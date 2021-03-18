@@ -13,32 +13,32 @@ workflows:
       - prepare:
           filters:
             branches:
-              ignore: ${TRUNK_NAME}
+              ignore: main
       - lint:
           requires:
             - prepare
           filters:
             branches:
-              ignore: ${TRUNK_NAME}
+              ignore: main
       - download-dependencies:
           requires:
             - lint
           filters:
             branches:
-              ignore: ${TRUNK_NAME}
+              ignore: main
       - unit-test:
           requires:
             - download-dependencies
           filters:
             branches:
-              ignore: ${TRUNK_NAME}
+              ignore: main
 
   on-trunk-merge:
     jobs:
       - publish:
           filters:
             branches:
-              only: ${TRUNK_NAME}
+              only: main
 
 
 jobs:
@@ -57,7 +57,7 @@ jobs:
           # In the case that this is used after the merge, we want to compare the change with the
           # commit right before it
           command: |
-            if [[ "$(git branch --show-current)" == "${TRUNK_NAME}" ]]
+            if [[ "$(git branch --show-current)" == "main" ]]
             then
               git diff \
                 HEAD~1..HEAD \
@@ -65,7 +65,7 @@ jobs:
                 --diff-filter=d > changelist
             else
               git diff \
-                ${TRUNK_NAME}.."$(git branch --show-current)" \
+                main.."$(git branch --show-current)" \
                 --name-only \
                 --diff-filter=d > changelist
             fi
