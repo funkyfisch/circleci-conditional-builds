@@ -32,15 +32,31 @@ workflows:
           filters:
             branches:
               ignore: main
+
+  on-trunk-merge:
+    jobs:
+      - prepare:
+          filters:
+            branches:
+              only: main
+      - download-dependencies:
+          requires:
+            - prepare
+          filters:
+            branches:
+              only: main
+      - unit-test:
+          requires:
+            - download-dependencies
+          filters:
+            branches:
+              only: main
       - code-coverage:
           requires:
             - unit-test
           filters:
             branches:
-              ignore: main
-
-  on-trunk-merge:
-    jobs:
+              only: main
       - publish:
           filters:
             branches:
@@ -177,6 +193,12 @@ jobs:
     steps:
       - attach_workspace:
           at: .
+      - run: |
+          if ! cat changelist | grep "\(\.js\|package\.json\)"
+          then
+            echo "No source files modified, skipping code-coverage"
+            circleci-agent step halt
+          fi
       - run:
           name: "Generate code coverage"
           command: npm run coverage
