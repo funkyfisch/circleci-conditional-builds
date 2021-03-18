@@ -32,6 +32,12 @@ workflows:
           filters:
             branches:
               ignore: main
+      - code-coverage:
+          requires:
+            - unit-test
+          filters:
+            branches:
+              ignore: main
 
   on-trunk-merge:
     jobs:
@@ -163,6 +169,17 @@ jobs:
             circleci-agent step halt
           fi
       - run: npm run test:unit
+
+  code-coverage:
+    docker:
+      - image: circleci/node:lts
+    working_directory: ~/app
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: "Generate code coverage"
+          command: npm run coverage && ./node_modules/codecov/bin/codecov
 
   publish:
     docker:
