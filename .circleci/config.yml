@@ -58,6 +58,8 @@ workflows:
             branches:
               only: main
       - publish:
+          requires:
+            - code-coverage
           filters:
             branches:
               only: main
