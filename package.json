@@ -4,7 +4,8 @@
   "description": "[![funkyfisch](https://circleci.com/gh/funkyfisch/circleci-conditional-builds.svg?style=shield)](https://circleci.com/gh/funkyfisch/circleci-conditional-builds?branch=main)",
   "main": "src/index.js",
   "scripts": {
-    "test:unit": "jest"
+    "test:unit": "./node_modules/jest/bin/jest.js",
+    "coverage": "./node_modules/jest/bin/jest.js --collect-coverage"
   },
   "repository": {
     "type": "git",
