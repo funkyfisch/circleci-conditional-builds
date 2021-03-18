@@ -210,7 +210,10 @@ jobs:
   publish:
     docker:
       - image: circleci/node:lts
+    working_directory: ~/app
     steps:
+      - attach_workspace:
+          at: .
       - run:
           name: Generate reports, build and publish if relevant files modified
           command: |
