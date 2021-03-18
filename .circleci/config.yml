@@ -179,7 +179,9 @@ jobs:
           at: .
       - run:
           name: "Generate code coverage"
-          command: npm run coverage && ./node_modules/codecov/bin/codecov
+          command: npm run coverage
+      - store_artifacts:
+          path: coverage
 
   publish:
     docker:
